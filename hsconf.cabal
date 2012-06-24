@@ -23,10 +23,14 @@ cabal-version : >= 1.6
 --     description : Enable building of tests
 --     default     : False
 
+
 library
     hs-source-dirs  : src
-    build-depends   : base >=4.2 && < 4.6, bytestring ==0.9.*,
-        containers >=0.4, mtl ==2.0.*, parsec ==3.1.*
+
+    -- TODO replace with dependencies found in the Haskell Platform if possible
+    build-depends   : base >=4.2 && < 4.6, bytestring >=0.9,
+        containers >=0.4, mtl >=2.0, parsec >=3.1
+
     exposed-modules : Data.Conf Data.Conf.Types Data.Conf.Reader
     other-modules   : Data.Conf.Reader.Internals
 
