@@ -1,6 +1,6 @@
 -- |
--- Module    : Data.Ini
--- Copyright : 2011 Magnus Therning
+-- Module    : Data.Conf
+-- Copyright : 2011 Magnus Therning, 2012 Hans Hoglund
 -- License   : BSD3
 --
 -- A representation of configuration options.  It consists of /sections/,
@@ -9,18 +9,21 @@
 --
 -- This module contains the API for constructing, manipulating, and querying
 -- configurations.
-module Data.Ini where
+module Data.Conf where
 
 -- {{{1 imports
 import qualified Data.Map as M
 import Data.Maybe
 
-import Data.Ini.Types
+import Data.Conf.Types
 
 -- {{{1 configurations
 -- | Constructs an empty configuration.
 emptyConfig :: Config
-emptyConfig = M.empty
+emptyConfig = M.empty  
+
+defaultSectionName :: SectionName
+defaultSectionName = ("", Nothing)
 
 -- {{{1 sections
 -- | Returns @True@ iff the configuration has a section with that name.

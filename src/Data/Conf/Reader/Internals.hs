@@ -1,10 +1,10 @@
 -- |
--- Module    : Data.Ini.Reader.Internals
--- Copyright : 2011 Magnus Therning
+-- Module    : Data.Conf.Reader.Internals
+-- Copyright : 2011 Magnus Therning, 2012 Hans Hoglund
 -- License   : BSD3
 --
--- Internal functions used in 'Data.Ini.Reader'.
-module Data.Ini.Reader.Internals where
+-- Internal functions used in 'Data.Conf.Reader'.
+module Data.Conf.Reader.Internals where
 
 import Control.Monad.Error
 import Control.Monad.State
@@ -13,8 +13,8 @@ import Text.Parsec as P
 import Text.Parsec.String
 import qualified Data.ByteString as BS
 
-import Data.Ini
-import Data.Ini.Types
+import Data.Conf
+import Data.Conf.Types
 
 data IniReaderError
     = IniParserError String
@@ -29,38 +29,39 @@ instance Error IniReaderError where
 type IniParseResult = Either IniReaderError
 
 -- | The type used to represent a line of a config file.
-data IniFile
-    = SectionL String
+data IniFileLine
+    = SectionL String (Maybe String)
     | OptionL String String
     | OptionContL String
     | CommentL
     deriving (Show, Eq)
 
--- | Build a configuration from a list of 'IniFile' items.
-buildConfig :: [IniFile] -> IniParseResult Config
+-- | Build a configuration from a list of 'IniFileLine' items.
+buildConfig :: [IniFileLine] -> IniParseResult Config
 buildConfig ifs = let
         isComment CommentL = True
-        isComment _ = False
+        isComment _        = False
 
-        fIfs = filter (not . isComment) ifs
+        nonCommentIniFileLines = filter (not . isComment) ifs
 
         -- merge together OptionL and subsequent OptionContL items
+        mergeOptions :: [IniFileLine] -> Either IniReaderError [IniFileLine]
         mergeOptions [] = return []
-        mergeOptions (s@(SectionL _) : ifs) = (s :) `liftM` mergeOptions ifs
-        mergeOptions (CommentL : ifs ) = (CommentL :) `liftM` mergeOptions ifs
+        mergeOptions (s@(SectionL _ _) : ifs)                = (s :) `liftM` mergeOptions ifs
+        mergeOptions (CommentL : ifs )                       = (CommentL :) `liftM` mergeOptions ifs
         mergeOptions (OptionL on ov : OptionContL ov2 : ifs) = mergeOptions $ (OptionL on (ov ++ ov2)) : ifs
-        mergeOptions (o@(OptionL on ov) : ifs) = (o :) `liftM` mergeOptions ifs
-        mergeOptions _ = throwError $ IniSyntaxError "Syntax error in INI file."
+        mergeOptions (o@(OptionL on ov) : ifs)               = (o :) `liftM` mergeOptions ifs
+        mergeOptions _ = throwError $ IniSyntaxError "Syntax error in configuration file."
 
-        -- build the configuration from a [IniFile]
+        -- build the configuration from a [IniFileLine]
         buildit a [] = return a
-        buildit a (SectionL sn : is) = put sn >> buildit a is
+        buildit a (SectionL sn ssn : is) = put (sn, ssn) >> buildit a is
         buildit a (OptionL on ov : is) = do
             sn <- get
             let na = setOption sn on ov a
             buildit na is
 
-    in mergeOptions fIfs >>= (\ is -> return . fst $ runState (buildit emptyConfig is) "default")
+    in mergeOptions nonCommentIniFileLines >>= (\ is -> return . fst $ runState (buildit emptyConfig is) defaultSectionName)
 
 -- | Consumer of whitespace \"@ \t@\".
 eatWhiteSpace :: Parser String
@@ -69,26 +70,33 @@ eatWhiteSpace = many $ oneOf " \t"
 -- | Parser for the start-of-section line.  It expects the line to start with a
 -- @[@ then find the section name, and finally a @]@.  The section name may be
 -- surrounded by any number of white space characters (see 'eatWhiteSpace').
-secParser :: Parser IniFile
+secParser :: Parser IniFileLine
 secParser = let
-        validSecNameChrs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_-/@"
+        validSecNameChrs    = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_-/@"
+        validSubSecNameChrs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_-/@"
     in do
         char '['
         eatWhiteSpace
         sn <- many1 $ oneOf validSecNameChrs
         eatWhiteSpace
+        ssn <- optionMaybe $ do
+            char '"'
+            ssn <- many1 $ oneOf validSubSecNameChrs
+            char '"'
+            return ssn
         char ']'
         manyTill anyChar newline
-        return $ SectionL sn
+        return $ SectionL sn ssn
 
 -- | Parser for a single line of an option.  The line must start with an option
 -- name, then a @=@ must be found, and finally the rest of the line is taken as
 -- the option value.  The equal sign may be surrounded by any number of white
 -- space characters (see 'eatWhiteSpace').
-optLineParser :: Parser IniFile
+optLineParser :: Parser IniFileLine
 optLineParser = let
         validOptNameChrs = ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_-/@"
     in do
+        eatWhiteSpace
         on <- many1 $ oneOf validOptNameChrs
         eatWhiteSpace
         char '='
@@ -100,7 +108,7 @@ optLineParser = let
 -- either a space or a tab character (\"@ \t@\").  Everything else on the line,
 -- until the newline character, is taken as the continuation of an option
 -- value.
-optContParser :: Parser IniFile
+optContParser :: Parser IniFileLine
 optContParser = do
     oneOf " \t"
     eatWhiteSpace
@@ -111,7 +119,7 @@ optContParser = do
 -- | Parser for "noise" in the configuration file, such as comments and empty
 -- lines.  (Note that lines containing only space characters will be
 -- successfully parsed by 'optContParser'.)
-noiseParser :: Parser IniFile
+noiseParser :: Parser IniFileLine
 noiseParser = let
         commentP = do
             oneOf "#;"
@@ -119,7 +127,7 @@ noiseParser = let
         emptyL = newline >> return ""
     in choice [commentP, emptyL] >> return CommentL
 
-iniParser :: Parser [IniFile]
+iniParser :: Parser [IniFileLine]
 iniParser = do
     many noiseParser
     s1 <- secParser

@@ -1,10 +1,10 @@
 -- |
--- Module    : Data.Ini.Reader
--- Copyright : 2011 Magnus Therning
+-- Module    : Data.Conf.Reader
+-- Copyright : 2011 Magnus Therning, 2012 Hans Hoglund
 -- License   : BSD3
 --
 -- Parser for configurations.
-module Data.Ini.Reader
+module Data.Conf.Reader
     ( parse
     , IniReaderError(..)
     , IniParseResult
@@ -13,8 +13,8 @@ module Data.Ini.Reader
 import Control.Monad.Error
 import qualified Text.ParserCombinators.Parsec as P
 
-import Data.Ini.Types
-import Data.Ini.Reader.Internals
+import Data.Conf.Types
+import Data.Conf.Reader.Internals
 
 -- | Parser for a configuration contained in a 'String'.
 parse :: String -> IniParseResult Config

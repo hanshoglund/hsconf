@@ -1,0 +1,42 @@
+name          : hsconf
+version       : 2.0
+license       : BSD3
+license-file  : LICENSE
+author        : Magnus Therning, Hans Hoglund
+maintainer    : hans@hanshoglund.se
+copyright     : Magnus Therning, 2010, Hans Hoglund 2012
+description   : Parses GIT-style configuration files
+description   : 
+    Parses GIT-style configuration files.
+    
+    Based on the hsnini package, by Magnus Therning
+
+build-type    : Custom
+category      : Network, Text
+cabal-version : >= 1.6
+
+-- source-repository head
+--     type     : git
+--     location : https://github.com/magthe/hsconf.git
+
+-- flag Test
+--     description : Enable building of tests
+--     default     : False
+
+library
+    hs-source-dirs  : src
+    build-depends   : base >=4.2 && < 4.6, bytestring ==0.9.*,
+        containers >=0.4, mtl ==2.0.*, parsec ==3.1.*
+    exposed-modules : Data.Conf Data.Conf.Types Data.Conf.Reader
+    other-modules   : Data.Conf.Reader.Internals
+
+-- executable tests
+--     main-is        : Main.hs
+--     hs-source-dirs : tst, src
+--     other-modules  : Ini ReaderI
+--     if flag(Test)
+--         build-depends : HUnit, test-framework, test-framework-hunit, test-framework-quickcheck2, test-framework-th, QuickCheck
+--         buildable     : True
+--         -- ghc-options   : -fhpc
+--     else
+--         buildable     : False
