@@ -1,5 +1,5 @@
 -- |
--- Module    : Data.Conf
+-- Module    : Data.Config
 -- Copyright : 2011 Magnus Therning, 2012 Hans Hoglund
 -- License   : BSD3
 --
@@ -9,14 +9,24 @@
 --
 -- This module contains the API for constructing, manipulating, and querying
 -- configurations.
-module Data.Conf where
+module Data.Config where
 
--- {{{1 imports
 import qualified Data.Map as M
 import Data.Maybe
 
-import Data.Conf.Types
+type OptionName = String
+type OptionValue = String
+type Section = M.Map OptionName OptionValue
 
+type SectionName = (String, Maybe String)
+type Config = M.Map SectionName Section
+
+-- useful since Map doesn't have any Serial instance
+cfgFromList :: [(SectionName, [(OptionName, OptionValue)])] -> Config
+cfgFromList =  M.map (M.fromList) . M.fromList
+
+cfgToList :: Config -> [(SectionName, [(OptionName, OptionValue)])]
+cfgToList = M.toList . M.map (M.toList)
 -- {{{1 configurations
 -- | Constructs an empty configuration.
 emptyConfig :: Config
