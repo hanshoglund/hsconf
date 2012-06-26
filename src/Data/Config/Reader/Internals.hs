@@ -25,6 +25,11 @@ instance Error ConfigReaderError where
     noMsg = ConfigOtherError "Unknown error"
     strMsg s = ConfigOtherError s
 
+errorMessage :: ConfigReaderError -> String
+errorMessage (ConfigOtherError x)  = x
+errorMessage (ConfigParserError x) = x
+errorMessage (ConfigSyntaxError x) = x
+
 type ConfigParseResult = Either ConfigReaderError
 
 -- | The type used to represent a line of a config file.

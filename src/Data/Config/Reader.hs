@@ -5,7 +5,8 @@
 --
 -- Parser for configurations.
 module Data.Config.Reader
-    ( parse
+    ( parse    
+    , errorMessage
     , ConfigReaderError(..)
     , ConfigParseResult
     ) where
@@ -15,6 +16,7 @@ import qualified Text.ParserCombinators.Parsec as P
 
 import Data.Config
 import Data.Config.Reader.Internals
+
 
 -- | Parser for a configuration contained in a 'String'.
 parse :: String -> ConfigParseResult Config
