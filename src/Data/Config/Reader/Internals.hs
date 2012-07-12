@@ -71,6 +71,9 @@ buildConfig ifs = let
 eatWhiteSpace :: Parser String
 eatWhiteSpace = many $ oneOf " \t"
 
+endOfLine :: Parser ()
+endOfLine = newline <|> eof >> return ()
+
 -- | Parser for the start-of-section line.  It expects the line to start with a
 -- @[@ then find the section name, and finally a @]@.  The section name may be
 -- surrounded by any number of white space characters (see 'eatWhiteSpace').
@@ -89,7 +92,7 @@ secParser = let
             char '"'
             return ssn
         char ']'
-        manyTill anyChar newline
+        manyTill anyChar endOfLine
         return $ SectionL sn ssn
 
 -- | Parser for a single line of an option.  The line must start with an option
@@ -105,7 +108,7 @@ optLineParser = let
         eatWhiteSpace
         char '='
         eatWhiteSpace
-        ov <- manyTill anyChar newline
+        ov <- manyTill anyChar endOfLine
         return $ OptionL on ov
 
 -- | Parser for an option-value continuation line.  The line must start with
@@ -117,7 +120,7 @@ optContParser = do
     oneOf " \t"
     eatWhiteSpace
     oc <- noneOf " \t"
-    ov <- manyTill anyChar newline
+    ov <- manyTill anyChar endOfLine
     return $ OptionContL $ oc:ov
 
 -- | Parser for "noise" in the configuration file, such as comments and empty
@@ -127,8 +130,8 @@ noiseParser :: Parser ConfigFileLine
 noiseParser = let
         commentP = do
             oneOf "#;"
-            manyTill anyChar newline
-        emptyL = newline >> return ""
+            manyTill anyChar endOfLine
+        emptyL = endOfLine >> return ""
     in choice [commentP, emptyL] >> return CommentL
 
 confParser :: Parser [ConfigFileLine]

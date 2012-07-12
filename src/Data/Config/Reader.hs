@@ -5,7 +5,8 @@
 --
 -- Parser for configurations.
 module Data.Config.Reader
-    ( parse    
+    ( parse
+    , parse'    
     , errorMessage
     , ConfigReaderError(..)
     , ConfigParseResult
@@ -17,11 +18,13 @@ import qualified Text.ParserCombinators.Parsec as P
 import Data.Config
 import Data.Config.Reader.Internals
 
-
 -- | Parser for a configuration contained in a 'String'.
 parse :: String -> ConfigParseResult Config
-parse s = let
-        pr = P.parse confParserEmpty "ini" s
+parse = parse' ""
+
+parse' :: FilePath -> String -> ConfigParseResult Config
+parse' fileName s = let
+        pr = P.parse confParserEmpty fileName s
     in case pr of
         Left e -> throwError . ConfigParserError $ show e
         Right [] -> Right $ emptyConfig
