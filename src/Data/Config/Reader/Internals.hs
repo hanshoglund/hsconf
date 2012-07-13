@@ -72,7 +72,7 @@ eatWhiteSpace :: Parser String
 eatWhiteSpace = many $ oneOf " \t"
 
 endOfLine :: Parser ()
-endOfLine = newline <|> eof >> return ()
+endOfLine = (newline >> return ()){- <|> (eof >> return ()) -}
 
 -- | Parser for the start-of-section line.  It expects the line to start with a
 -- @[@ then find the section name, and finally a @]@.  The section name may be
