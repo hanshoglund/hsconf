@@ -8,7 +8,6 @@ module Data.Config.Reader.Internals where
 
 import Control.Monad.Error
 import Control.Monad.State
--- import Text.ParserCombinators.Parsec as P
 import Text.Parsec as P
 import Text.Parsec.String
 import qualified Data.ByteString as BS

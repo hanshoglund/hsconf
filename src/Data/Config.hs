@@ -11,15 +11,16 @@
 -- configurations.
 module Data.Config where
 
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
 
 type OptionName = String
 type OptionValue = String
-type Section = M.Map OptionName OptionValue
+type Section = Map OptionName OptionValue
 
 type SectionName = (String, Maybe String)
-type Config = M.Map SectionName Section
+type Config = Map SectionName Section
 
 -- useful since Map doesn't have any Serial instance
 cfgFromList :: [(SectionName, [(OptionName, OptionValue)])] -> Config
@@ -27,6 +28,7 @@ cfgFromList =  M.map (M.fromList) . M.fromList
 
 cfgToList :: Config -> [(SectionName, [(OptionName, OptionValue)])]
 cfgToList = M.toList . M.map (M.toList)
+
 -- {{{1 configurations
 -- | Constructs an empty configuration.
 emptyConfig :: Config
